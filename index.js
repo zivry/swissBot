@@ -11,8 +11,8 @@ var bot_name = '<@U0GPNKZ3P>';
 var slack = new Slack(apiToken);
 
 
-//setInterval(readMessages, 1000 * 2);
-readMessages();
+setInterval(readMessages, 1000 * 10);
+//readMessages();
 
 function readMessages() {
     console.info('Reading messages');
@@ -32,7 +32,7 @@ function readMessages() {
             var filteredMessages = _.filter(response.messages, filterBotMsg);
             console.log('Got messages ' + filteredMessages.length);
             _.each(filteredMessages, function(item) {
-                pluginsManager.processMessage(item.text.substr(bot_name.length + 2));
+                pluginsManager.processMessage(item.text.substr(bot_name.length + 1));
             });
         }
 
@@ -49,7 +49,6 @@ function readMessages() {
         }
 
         function filterBotMsg(m) {
-            console.info(m.text);
             return m.text.indexOf(bot_name) === 0;
         }
     }
