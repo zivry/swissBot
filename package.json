@@ -1,0 +1,20 @@
+{
+  "name": "swiss-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.intel.com/SWISS/swissBoot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "jenkins-api": "^0.2.8",
+    "slack-node": "^0.1.7",
+    "underscore": "^1.8.3"
+  }
+}
