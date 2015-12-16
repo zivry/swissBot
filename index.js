@@ -18,7 +18,8 @@ function readMessages() {
     console.info('Reading messages');
     slack.api('channels.history', {
         channel : bot_channel_id,
-        oldest : lastTimestamp.get()
+        oldest : lastTimestamp.get(),
+        count: 1000
     }, processMessages);
 
     function processMessages(err, response) {
@@ -48,6 +49,7 @@ function readMessages() {
         }
 
         function filterBotMsg(m) {
+            console.info(m.text);
             return m.text.indexOf(bot_name) === 0;
         }
     }

@@ -3,6 +3,7 @@ logs
 *.log
 
 .idea
+persistence.txt
 # Runtime data
 pids
 *.pid

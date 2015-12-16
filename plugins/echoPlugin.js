@@ -1,6 +1,7 @@
 var Q = require('q');
 
 module.exports = function(message, log, postMessage) {
-    postMessage(message);
+    log(message);
+    //return postMessage(message);
     return Q.when();
 };
