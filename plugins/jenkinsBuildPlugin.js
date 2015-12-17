@@ -15,7 +15,7 @@ function help()
 }
 function exec(errorCodes,words, log, postMessage) {
     if (words[0] === 'build') {
-        if(words !== 2)
+        if(words.length !== 2)
         {
           return errorCodes.reject_parsing;
         }
@@ -26,7 +26,7 @@ function exec(errorCodes,words, log, postMessage) {
             .catch(processError);
     }
     else {
-      return errorCodes.reject_notHandling;      
+      return errorCodes.reject_notHandling;
     }
 
     function processInfo(data) {
