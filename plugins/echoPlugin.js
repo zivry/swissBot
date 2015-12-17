@@ -7,10 +7,14 @@ function help()
 {
   return "echo <message>";
 }
-function exec(message, log, postMessage) {
-    if ((message.length === 2) && (message[0] === 'echo')) {
+function exec(errorCodes,message, log, postMessage) {
+  if (message[0] === 'echo') {
+    if(message.length === 1 )
+    {
+      return errorCodes.reject_parsing;
+    }
     log(message);
     return postMessage(message);
   }
-  return Q.when(false);
+  return errorCodes.reject_notHandling;
 };

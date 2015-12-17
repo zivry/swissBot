@@ -13,8 +13,12 @@ function help()
 {
   return "build <task name>";
 }
-function exec(words, log, postMessage) {
-    if ((words.length === 2) && (words[0] === 'build')) {
+function exec(errorCodes,words, log, postMessage) {
+    if (words[0] === 'build') {
+        if(words !== 2)
+        {
+          return errorCodes.reject_parsing;
+        }
         log('fetching ' + words[1] + ' info');
         return Q.nfcall(jenkins.job_info, words[1])
             .then(processInfo)
@@ -22,7 +26,7 @@ function exec(words, log, postMessage) {
             .catch(processError);
     }
     else {
-        return Q.when(false);
+      return errorCodes.reject_notHandling;      
     }
 
     function processInfo(data) {
