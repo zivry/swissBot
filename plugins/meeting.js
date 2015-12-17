@@ -29,7 +29,7 @@ var s = "http://" + username + ":" + password + "@letsmeetrooms.intel.com/Dashbo
 function exec(errorCodes,message, log, postMessage) {
   if(message[0] !== 'meeting')
   {
-    return errorCodes.notHandling;
+    return errorCodes.reject_notHandling;
   }
   log("request is: " + s);
 
