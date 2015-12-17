@@ -14,7 +14,7 @@ function exec(errorCodes,message, log, postMessage) {
       return errorCodes.reject_parsing;
     }
     log(message);
-    return postMessage(message);
+    return postMessage(message.slice(1).join(" "));
   }
   return errorCodes.reject_notHandling;
 };
