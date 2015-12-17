@@ -12,7 +12,7 @@ var slack = new Slack(apiToken);
 
 
 setInterval(readMessages, 1000 * 10);
-//readMessages();
+// readMessages();
 
 function readMessages() {
     console.info('Reading messages');
@@ -32,7 +32,7 @@ function readMessages() {
             var filteredMessages = _.filter(response.messages, filterBotMsg);
             console.log('Got messages ' + filteredMessages.length);
             _.each(filteredMessages, function(item) {
-                pluginsManager.processMessage(item.text.substr(bot_name.length + 1));
+                pluginsManager.processMessage(item.text.substr(bot_name.length + 1).split(/ /g));
             });
         }
 

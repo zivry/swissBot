@@ -4,8 +4,16 @@ var extend = require('util')._extend;
 var jenkins = require('jenkins-api').init('http://rezra3:769c247460c5c507d4d062883421222b@nb-jenkins.intel.com:8080');
 // TODO - move jenkins api token and username to env
 
-module.exports = function(message, log, postMessage) {
-    var words = message.split(' ');
+module.exports = {
+  exec: exec,
+  help: help
+}
+
+function help()
+{
+  return "build <task name>";
+}
+function exec(words, log, postMessage) {
     if ((words.length === 2) && (words[0] === 'build')) {
         log('fetching ' + words[1] + ' info');
         return Q.nfcall(jenkins.job_info, words[1])
@@ -14,7 +22,7 @@ module.exports = function(message, log, postMessage) {
             .catch(processError);
     }
     else {
-        return Q.reject();
+        return Q.when(false);
     }
 
     function processInfo(data) {
