@@ -1,5 +1,6 @@
 var Q = require('q');
 var request = require('request');
+var ntlm = require('request-ntlm');
 var url = require('url');
 
 module.exports = {
@@ -25,20 +26,34 @@ var propertiesObject = { fromDate: '17-Dec-2015',
   _: '1450348670547' };
 var username = 'zivry';
 var password = '';
-var s = "http://" + username + ":" + password + "@letsmeetrooms.intel.com/Dashboard/AllReservationDetailsPartial";
+var s = "https://" + username + ":" + password + "@letsmeetrooms.intel.com/Dashboard/AllReservationDetailsPartial";
 function exec(errorCodes,message, log, postMessage) {
-  if(message[0] !== 'meeting')
-  {
-    return errorCodes.reject_notHandling;
-  }
-  log("request is: " + s);
+  // if(message[0] !== 'meeting')
+  // {
+  //   return errorCodes.reject_notHandling;
+  // }
+  // log("request is: " + s);
 
-  return Q.nfcall(request.get({url:s, qs:propertiesObject },findRoom));
+  var opts = {
+    username: username,
+    password: password,
+    url: 'https://letsmeetrooms.intel.com/Dashboard/AllReservationDetailsPartial'
+  };
+  // return Q.nfcall(request.get({url:s, qs:propertiesObject },findRoom));
+  // ntlm.get(opts,{},  function(err, response) {
+  // console.dir("=====================inside:"   +  response);
+  // });
+  log("will find a room");
+
+  return Q.nfcall(ntlm.get,opts,{}).then(findRoom).catch(function (err)
+{
+  console.dir(err);
+});
 
 
-  function findRoom(error, response, body) {
+  function findRoom(response) {
     log("finding a room");
-    console.dir( body);
+    console.dir( response);
     if (!error && response.statusCode == 200) {
       postMessage(body.rows[0]); // Show the HTML for the Google homepage.
     }
