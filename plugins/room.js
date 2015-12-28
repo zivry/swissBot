@@ -26,7 +26,7 @@ var propertiesObject = { fromDate: '17-Dec-2015',
 		sortOrder: 'asc',
 		_: '1450348670547' };
 var username = 'zivry';
-var password = 'mr77130%';
+var password = '';
 var s = "https://" + username + ":" + password + "@letsmeetrooms.intel.com/Dashboard/AllReservationDetailsPartial";
 function exec(errorCodes,message, log, postMessage) {
 		if(message[0] !== 'room'  )
