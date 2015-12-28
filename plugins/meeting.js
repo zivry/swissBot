@@ -99,7 +99,7 @@ function printNextMeeting(user, postMessage, log) {
                 postMessage('Your next meeting is:\n' + nextMeeting);
             }
             if(allDay !== '') {
-                postMessage('You also have all days event(s) :\n' + allDay);
+                postMessage('\nYou also have all days event(s) :\n' + allDay);
             }
         }
     }
