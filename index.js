@@ -11,14 +11,14 @@ var bot_channel_id = 'C0GPN3KV2';
 var slack = new Slack(apiToken);
 
 
-setInterval(readMessages, 1000 * 10);
-// readMessages();
+// setInterval(readMessages, 1000 * 10);
+readMessages();
 
 function readMessages() {
     console.info('Reading messages');
     slack.api('channels.history', {
         channel : bot_channel_id,
         oldest : lastTimestamp.get(),
-        count: 1000
+        count: 1
     }, processMessages);
 }

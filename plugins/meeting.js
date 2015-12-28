@@ -1,6 +1,7 @@
 var Q = require('q');
 var request = require('request');
-var ntlm = require('request-ntlm');
+// var ntlm = require('request-ntlm');
+var ntlm = require('httpntlm');
 var url = require('url');
 
 module.exports = {
@@ -24,8 +25,9 @@ var propertiesObject = { fromDate: '17-Dec-2015',
   searchIndex: 'ResourceName',
   sortOrder: 'asc',
   _: '1450348670547' };
+  console.dir(propertiesObject);
 var username = 'zivry';
-var password = '';
+var password = 'mr77130%';
 var s = "https://" + username + ":" + password + "@letsmeetrooms.intel.com/Dashboard/AllReservationDetailsPartial";
 function exec(errorCodes,message, log, postMessage) {
   // if(message[0] !== 'meeting')
@@ -37,7 +39,7 @@ function exec(errorCodes,message, log, postMessage) {
   var opts = {
     username: username,
     password: password,
-    url: 'https://letsmeetrooms.intel.com/Dashboard/AllReservationDetailsPartial'
+    url: 'http://letsmeetrooms.intel.com/Dashboard/AllReservationDetailsPartial?fromDate=27-Dec-2015&toDate=27-Dec-2015&fromTime=15:00&toTime=15:30&timeZone=Israel%20Standard%20Time&building=IDC9&floor=All&nd=1450348670545&rows=1&page=1&searchIndex=ResourceName&sortOrder=asc&_=1450348670547'
   };
   // return Q.nfcall(request.get({url:s, qs:propertiesObject },findRoom));
   // ntlm.get(opts,{},  function(err, response) {
@@ -45,7 +47,7 @@ function exec(errorCodes,message, log, postMessage) {
   // });
   log("will find a room");
 
-  return Q.nfcall(ntlm.get,opts,{}).then(findRoom).catch(function (err)
+  return Q.nfcall(ntlm.get,opts).then(findRoom).catch(function (err)
 {
   console.dir(err);
 });
