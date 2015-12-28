@@ -10,7 +10,7 @@ exec: exec,
 }
 function help()
 {
-		return "meeting [username]";
+		return "room [buliding]";
 }
 var propertiesObject = { fromDate: '17-Dec-2015',
 		toDate: '17-Dec-2015',
@@ -33,18 +33,15 @@ function exec(errorCodes,message, log, postMessage) {
 		{
 		 return errorCodes.reject_notHandling;
 		}
+		var building = message.length >  1 ? message[1] : 'IDC9'
 
-		log("will find a room");
+		log("will find a room in building:" + building);
 		var now = (new Date().getTime())+65*60*1000*2;
-		postMessage("looking for a free room "); 
 		var starttime = moment().add(-10,'hours').format().split("+")[0];
-		var endtime = moment().add(10,'hours').add(11,'minutes').format().split("+")[0];
+		var endtime = moment().add(10,'hours').format().split("+")[0];
 
-		log(starttime);
-		log(endtime);
-		var result	= JSON.parse(spawn("/usr/intel/bin/curl",["-s","--ntlm","-u",username+":"+password,'letsmeet.intel.com:8055/REST/Availability/GetRoomAvailabilityByBuildingLocal?organizerMailbox=zamir.ivry@intel.com&buildingName=IDC9&startTime=' + starttime + '&endTime=' + endtime + '&timeZone=Israel%20Standard%20Time&equipment=&minCapacity=0&apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor=undefined&format=JSON&logLevel=0']));
-//		log("chain" + _.chain(result).filter(filter).pluck("ResourceName").value());
-		postMessage(_.chain(result).filter(filter).pluck("ResourceName").value());	
+		var result	= JSON.parse(spawn("/usr/intel/bin/curl",["-s","--ntlm","-u",username+":"+password,'letsmeet.intel.com:8055/REST/Availability/GetRoomAvailabilityByBuildingLocal?organizerMailbox=zamir.ivry@intel.com&buildingName='+ building+ '&startTime=' + starttime + '&endTime=' + endtime + '&timeZone=Israel%20Standard%20Time&equipment=&minCapacity=0&apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor=undefined&format=JSON&logLevel=0']));
+		postMessage("found the following rooms:" + _.chain(result).filter(filter).pluck("ResourceName").value());	
 		return Q.when();
 		function filter(row) {
 				return _.filter(row.FreeBusy,arrayFilter).length === 0;
@@ -59,13 +56,5 @@ function exec(errorCodes,message, log, postMessage) {
 					return s;
 				}
 
-		}
-		
-		function findRoom(response) {
-				log("finding a room");
-				console.dir( response);
-				if (!error && response.statusCode == 200) {
-						postMessage(body.rows[0]); // Show the HTML for the Google homepage.
-				}
 		}
 };
