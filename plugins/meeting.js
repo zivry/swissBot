@@ -1,5 +1,6 @@
 var exchanger = require('exchanger');
 var _ = require('underscore');
+var usersManager = require('../lib/usersManager');
 
 module.exports = {
   exec: exec,
@@ -12,7 +13,7 @@ function help() {
 
 function exec(errorCodes, message, log, postMessage, user) {
     if (message[0] === 'meeting') {
-        if(!user) {
+        if(!user  || !user.calendarId) {
             return postMessage('You are not authorized to perform this operation');
         }
 
@@ -64,7 +65,6 @@ function printAgenda(day, user, postMessage, log) {
             message += ' : ' + meeting.subject + '\n';
         });
         postMessage(message);
-
     }
 }
 
@@ -106,10 +106,11 @@ function printNextMeeting(user, postMessage, log) {
 }
 
 function _getMeetings(now, next, user, callback) {
+    var negogiator = usersManager.getNegotiator();
     var options = {
         url: 'webmail.intel.com',
-        username: user.id,
-        password: user.password
+        username: negogiator.username,
+        password: negogiator.password
     };
 
     exchanger.initialize(options, function() {
