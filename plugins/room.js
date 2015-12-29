@@ -5,6 +5,8 @@ var moment = require('moment');
 var usersManager = require('../lib/usersManager');
 
 var n= usersManager.getNegotiator();
+var username = n.username;
+var password = n.password;
 module.exports = {
 exec: exec,
 	  help: help
@@ -13,8 +15,6 @@ function help()
 {
 		return "room [buliding]";
 }
-var username = n.username;
-var password = n.password;
 function exec(errorCodes,message, log, postMessage) {
 		if(message[0] !== 'room'  )
 		{
