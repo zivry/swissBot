@@ -2,7 +2,9 @@ var Q = require('q');
 var _ = require('underscore');
 var spawn = require('child_process').execFileSync;
 var moment = require('moment');
+var usersManager = require('../lib/usersManager');
 
+var n= usersManager.getNegotiator();
 module.exports = {
 exec: exec,
 	  help: help
@@ -11,8 +13,8 @@ function help()
 {
 		return "room [buliding]";
 }
-var username = 'zivry';
-var password = '';
+var username = n.username;
+var password = n.password;
 function exec(errorCodes,message, log, postMessage) {
 		if(message[0] !== 'room'  )
 		{
@@ -52,7 +54,7 @@ function exec(errorCodes,message, log, postMessage) {
 				if(building === undefined) 
 						return "IDC9";
 				building = 	building.toUpperCase();
-				var buildings = JSON.parse(spawn("/usr/intel/bin/curl",["-s","--ntlm","-u",username+":"+password,'letsmeet.intel.com:8055/REST/Location/GetLocationsMetaData?apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor=adahan2&format=json&logLevel=4']));
+				var buildings = JSON.parse(spawn("/usr/intel/bin/curl",["-s","--ntlm","-u",username+":"+password,'letsmeet.intel.com:8055/REST/Location/GetLocationsMetaData?apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor='+username+  '&format=json&logLevel=4']));
 				var a = _.chain(buildings).map(function(item){return item.Sites}).flatten().pluck("Buildings").flatten().pluck("BuildingName").contains(building).value();
 				if(a)	
 						return building;	
