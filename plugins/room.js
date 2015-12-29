@@ -12,22 +12,8 @@ function help()
 {
 		return "room [buliding]";
 }
-var propertiesObject = { fromDate: '17-Dec-2015',
-		toDate: '17-Dec-2015',
-		fromTime: '15:00',
-		toTime: '15:30',
-		timeZone: 'Israel Standard Time',
-		building: 'IDC9',
-		floor: 'All',
-		nd: '1450348670545',
-		rows: '100',
-		page: '1',
-		searchIndex: 'ResourceName',
-		sortOrder: 'asc',
-		_: '1450348670547' };
 var username = 'zivry';
 var password = '';
-var s = "https://" + username + ":" + password + "@letsmeetrooms.intel.com/Dashboard/AllReservationDetailsPartial";
 function exec(errorCodes,message, log, postMessage) {
 		if(message[0] !== 'room'  )
 		{
