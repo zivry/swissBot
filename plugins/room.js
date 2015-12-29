@@ -34,7 +34,6 @@ function exec(errorCodes,message, log, postMessage) {
 				postMessage("found the following rooms:" + _.chain(result).filter(filter).pluck("ResourceName").value());	
 		return Q.when();
 		function filter(row) {
-				log(row);
 				return _.filter(row.FreeBusy,arrayFilter).length === 0;
 				function arrayFilter(timeRange) {
 						e = getTimeInMilli(timeRange.EndTime);
