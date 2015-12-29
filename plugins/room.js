@@ -7,13 +7,14 @@ var usersManager = require('../lib/usersManager');
 var n= usersManager.getNegotiator();
 var username = n.username;
 var password = n.password;
+var defaultBuilding = 'IDC9';
 module.exports = {
 exec: exec,
 	  help: help
 }
 function help()
 {
-		return "room [buliding]";
+		return "room [buliding] - Find a room in requested building or in default building:" + defaultBuilding;
 }
 function exec(errorCodes,message, log, postMessage) {
 		if(message[0] !== 'room'  )
@@ -52,13 +53,13 @@ function exec(errorCodes,message, log, postMessage) {
 		function parseBuilding(building)
 		{
 				if(building === undefined) 
-						return "IDC9";
+						return defaultBuilding;
 				building = 	building.toUpperCase();
 				var buildings = JSON.parse(spawn("/usr/intel/bin/curl",["-s","--ntlm","-u",username+":"+password,'letsmeet.intel.com:8055/REST/Location/GetLocationsMetaData?apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor='+username+  '&format=json&logLevel=4']));
 				var a = _.chain(buildings).map(function(item){return item.Sites}).flatten().pluck("Buildings").flatten().pluck("BuildingName").contains(building).value();
 				if(a)	
 						return building;	
-				postMessage("There is no such building: *" + building );	
+				postMessage("There is no such building: *" + building + "*");	
 				return undefined;
 		}
 };
