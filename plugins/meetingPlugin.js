@@ -61,8 +61,12 @@ function printAgenda(day, user, postMessage, log) {
 
         var message = start.toDateString() + '\n';
         _.forEach(meetings, function(meeting) {
+            var location = '\n';
+            if(typeof meeting.location === 'string') {
+                location = ' (' + meeting.location  + ')\n';
+            }
             message += _printHours(new Date(meeting.start), new Date(meeting.end));
-            message += ' : ' + meeting.subject + '\n';
+            message += ' : ' + meeting.subject + location;
         });
         postMessage(message);
     }
@@ -132,15 +136,15 @@ function _printDate(startDateTime, endDateTime) {
     var startDate = new Date(startDateTime);
     var endDate = new Date(endDateTime);
 
-    var displayDate = startDate.toDateString() + '\n';
+    var displayDate = '*' + startDate.toDateString() + '*\n';
     displayDate += _printHours(startDate, endDate);
 
     return displayDate;
 }
 
 function _printHours(startDate, endDate) {
-    var hours = startDate.getHours()  + ':' + _minutes(startDate);
-    hours += ' - ' + endDate.getHours()  + ':' + _minutes(endDate);
+    var hours = '*' + startDate.getHours()  + ':' + _minutes(startDate);
+    hours += ' - ' + endDate.getHours()  + ':' + _minutes(endDate) + '*';
 
     return hours;
 

@@ -17,6 +17,7 @@ function help()
 		return "room [buliding] - Find a room in requested building or in default building:" + defaultBuilding;
 }
 function exec(errorCodes,message, log, postMessage) {
+	return errorCodes.reject_notHandling;
 		if(message[0] !== 'room'  )
 		{
 				return errorCodes.reject_notHandling;
