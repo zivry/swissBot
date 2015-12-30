@@ -4,63 +4,92 @@ var spawn = require('child_process').execFileSync;
 var moment = require('moment');
 var usersManager = require('../lib/usersManager');
 
-var n= usersManager.getNegotiator();
-var username = n.username;
-var password = n.password;
-var defaultBuilding = 'IDC9';
+var DEFAULT_BUILDING = 'IDC9';
+
 module.exports = {
-exec: exec,
-	  help: help
+	exec: exec,
+	help: help
+};
+
+function help() {
+	return "room [buliding] - Find a room in requested building or in default building:" + DEFAULT_BUILDING;
 }
-function help()
-{
-		return "room [buliding] - Find a room in requested building or in default building:" + defaultBuilding;
-}
-function exec(errorCodes,message, log, postMessage) {
-	return errorCodes.reject_notHandling;
-		if(message[0] !== 'room'  )
-		{
-				return errorCodes.reject_notHandling;
+
+function exec(errorCodes,message, log, postMessage, user) {
+
+	if(message[0] !== 'room'  ) {
+		return errorCodes.reject_notHandling;
+	}
+
+	var building = validateBuildingExists(message[1]);
+	if(building === undefined) {
+		return errorCodes.reject_parsing;
+	}
+
+	var now = (new Date().getTime())+65*60*1000*2;
+
+	//var building = message.length >  1 ? message[1] : 'IDC9'
+	var rooms = getRooms(building);
+	var	emptyRooms = _.chain(rooms).filter(filter).pluck("ResourceName").value();
+	if(emptyRooms.length === 0) {
+		postMessage("could not find empty rooms in:" + building);
+	} else {
+		postMessage("found the following rooms:" + emptyRooms);
+	}
+
+	return Q.when();
+
+	function filter(row) {
+		return _.filter(row.FreeBusy,arrayFilter).length === 0;
+		function arrayFilter(timeRange) {
+			e = getTimeInMilli(timeRange.EndTime);
+			s = getTimeInMilli(timeRange.StartTime);
+			//		log("s="+ s + "N=" +  now +"E=" + e)
+			return (now > s && now < e);
 		}
-		var building = parseBuilding(message[1]);
-		if(building === undefined)
-				return errorCodes.reject_parsing;
-		//var building = message.length >  1 ? message[1] : 'IDC9'
+
+		function getTimeInMilli(d) {
+			var s = d.split("(")[1].split("+")[0];
+			return s;
+		}
+	}
+
+	function validateBuildingExists(building) {
+		if(building === undefined) {
+			return DEFAULT_BUILDING;
+		}
+
+		building = 	building.toUpperCase();
+        var username = usersManager.getNegotiator().username;
+		var url = 'letsmeet.intel.com:8055/REST/Location/GetLocationsMetaData?apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor=' + username+  '&format=json&logLevel=4';
+		//var buildings = JSON.parse(spawn("/usr/intel/bin/curl",["-s","--ntlm","-u",username+":"+password,'letsmeet.intel.com:8055/REST/Location/GetLocationsMetaData?apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor='+username+  '&format=json&logLevel=4']));
+
+		var buildings = getData(url);
+		var buildingExists = _.chain(buildings).map(function(item){return item.Sites}).flatten().pluck("Buildings").flatten().pluck("BuildingName").contains(building).value();
+		if(buildingExists) {
+			return building;
+		}
+
+		postMessage("There is no such building: *" + building + "*");
+		return undefined;
+	}
+
+	function getRooms(building) {
 		log("will find a room in building:" + building);
-		var now = (new Date().getTime())+65*60*1000*2;
+
 		var starttime = moment().add(-10,'hours').format().split("+")[0];
 		var endtime = moment().add(10,'hours').format().split("+")[0];
-		var result	= JSON.parse(spawn("/usr/intel/bin/curl",["-s","--ntlm","-u",username+":"+password,'letsmeet.intel.com:8055/REST/Availability/GetRoomAvailabilityByBuildingLocal?organizerMailbox=zamir.ivry@intel.com&buildingName='+ building+ '&startTime=' + starttime + '&endTime=' + endtime + '&timeZone=Israel%20Standard%20Time&equipment=&minCapacity=0&apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor=undefined&format=JSON&logLevel=0']));
-		var	emptyRooms =	_.chain(result).filter(filter).pluck("ResourceName").value();		
-		if(emptyRooms.length === 0)
-				postMessage("could not find empty rooms in:" + building);
-		else
-				postMessage("found the following rooms:" + _.chain(result).filter(filter).pluck("ResourceName").value());	
-		return Q.when();
-		function filter(row) {
-				return _.filter(row.FreeBusy,arrayFilter).length === 0;
-				function arrayFilter(timeRange) {
-						e = getTimeInMilli(timeRange.EndTime);
-						s = getTimeInMilli(timeRange.StartTime);
-						//		log("s="+ s + "N=" +  now +"E=" + e)
-						return (now > s && now < e);
-				}
-				function getTimeInMilli(d) { 
-						var s = d.split("(")[1].split("+")[0];
-						return s;
-				}
 
-		}
-		function parseBuilding(building)
-		{
-				if(building === undefined) 
-						return defaultBuilding;
-				building = 	building.toUpperCase();
-				var buildings = JSON.parse(spawn("/usr/intel/bin/curl",["-s","--ntlm","-u",username+":"+password,'letsmeet.intel.com:8055/REST/Location/GetLocationsMetaData?apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor='+username+  '&format=json&logLevel=4']));
-				var a = _.chain(buildings).map(function(item){return item.Sites}).flatten().pluck("Buildings").flatten().pluck("BuildingName").contains(building).value();
-				if(a)	
-						return building;	
-				postMessage("There is no such building: *" + building + "*");	
-				return undefined;
-		}
+		//return JSON.parse(spawn("/usr/intel/bin/curl",["-s","--ntlm","-u",username+":"+password,'letsmeet.intel.com:8055/REST/Availability/GetRoomAvailabilityByBuildingLocal?organizerMailbox=zamir.ivry@intel.com&buildingName='+ building+ '&startTime=' + starttime + '&endTime=' + endtime + '&timeZone=Israel%20Standard%20Time&equipment=&minCapacity=0&apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor=undefined&format=JSON&logLevel=0']));
+		var url = 'letsmeet.intel.com:8055/REST/Availability/GetRoomAvailabilityByBuildingLocal?organizerMailbox=zamir.ivry@intel.com&buildingName='+ building + '&startTime=' + starttime + '&endTime=' + endtime + '&timeZone=Israel%20Standard%20Time&equipment=&minCapacity=0&apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor=undefined&format=JSON&logLevel=0'
+		return getData(url);
+	}
+
+	function getData(url) {
+		var n = usersManager.getNegotiator();
+		var username = n.username;
+		var password = n.password;
+
+		return JSON.parse(spawn("/usr/intel/bin/curl",["-s", "--ntlm", "-u", username + ":" + password, url]));
+	}
 };
