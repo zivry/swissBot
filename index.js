@@ -7,6 +7,8 @@ var apiToken = process.env.api_key;
 console.info('Slack API Key: ' + apiToken);
 var bot_channel_id = 'C0GPN3KV2';
 
+var CHANNEL_USER = '#bot_channel';
+
 var slack = new Slack(apiToken);
 
 usersManager.init();
@@ -21,7 +23,7 @@ setInterval(function() {
 function readMessages() {
     slack.api('channels.history', {
         channel : bot_channel_id,
-        oldest : usersManager.getTimeStamp(),
+        oldest : usersManager.getTimeStamp(CHANNEL_USER),
         count: 1000
     }, processHandler.processChatMessages);
 }
@@ -44,7 +46,7 @@ function processIMs(err, response) {
 
             slack.api('im.history', {
                 channel : im.id,
-                oldest : usersManager.getTimeStamp(im.user),
+                oldest : usersManager.getTimeStamp(im.id),
                 count: 1000
             }, processHandler.processPrivateMessages);
         });
