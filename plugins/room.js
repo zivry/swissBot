@@ -3,10 +3,11 @@ var _ = require('underscore');
 var spawn = require('child_process').execFileSync;
 var moment = require('moment');
 var usersManager = require('../lib/usersManager');
-
 var request = require('sync-request');
 
 var DEFAULT_BUILDING = 'IDC9';
+
+var LETS_MEET_API = 'http://letsmeet.intel.com:8055/REST';
 
 module.exports = {
 	exec: exec,
@@ -28,10 +29,13 @@ function exec(errorCodes,message, log, postMessage, user) {
 		return errorCodes.reject_parsing;
 	}
 
+    //var rooms = findAvailableRooms(building);
+    var rooms = getRooms(building);
+
 	var now = (new Date().getTime())+65*60*1000*2;
 
 	//var building = message.length >  1 ? message[1] : 'IDC9'
-	var rooms = getRooms(building);
+	//var rooms = getRooms(building);
     var matchingRoom = _.chain(rooms).filter(filter);
     var	emptyRoomName = matchingRoom.pluck("ResourceName").value();
 	if(emptyRoomName.length === 0) {
@@ -64,17 +68,13 @@ function exec(errorCodes,message, log, postMessage, user) {
 		}
 
 		building = 	building.toUpperCase();
-        var username = usersManager.getNegotiator().username;
-		var url = 'letsmeet.intel.com:8055/REST/Location/GetLocationsMetaData?apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor=' + username+  '&format=json&logLevel=4';
-		//var buildings = JSON.parse(spawn("/usr/intel/bin/curl",["-s","--ntlm","-u",username+":"+password,'letsmeet.intel.com:8055/REST/Location/GetLocationsMetaData?apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor='+username+  '&format=json&logLevel=4']));
+        var url = LETS_MEET_API + '/Location/GetBuildings?region=GER&country=Israel&city=IDC&apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor=' + user.id +  '&format=JSON&logLevel=0';
+        var buildings = getJSON(url);
+        if(buildings.indexOf(building) >= 0) {
+            return building;
+        }
 
-		var buildings = getData(url);
-		var buildingExists = _.chain(buildings).map(function(item){return item.Sites}).flatten().pluck("Buildings").flatten().pluck("BuildingName").contains(building).value();
-		if(buildingExists) {
-			return building;
-		}
-
-		postMessage("There is no such building: *" + building + "*");
+		postMessage("There is no such building: *" + building + "*\nThe following buildings are available in your campus:\n" + buildings.join('\n'));
 		return undefined;
 	}
 
@@ -85,8 +85,9 @@ function exec(errorCodes,message, log, postMessage, user) {
 		var endtime = moment().add(10,'hours').format().split("+")[0];
 
 		//return JSON.parse(spawn("/usr/intel/bin/curl",["-s","--ntlm","-u",username+":"+password,'letsmeet.intel.com:8055/REST/Availability/GetRoomAvailabilityByBuildingLocal?organizerMailbox=zamir.ivry@intel.com&buildingName='+ building+ '&startTime=' + starttime + '&endTime=' + endtime + '&timeZone=Israel%20Standard%20Time&equipment=&minCapacity=0&apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor=undefined&format=JSON&logLevel=0']));
-		var url = 'letsmeet.intel.com:8055/REST/Availability/GetRoomAvailabilityByBuildingLocal?organizerMailbox=zamir.ivry@intel.com&buildingName='+ building + '&startTime=' + starttime + '&endTime=' + endtime + '&timeZone=Israel%20Standard%20Time&equipment=&minCapacity=0&apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor=undefined&format=JSON&logLevel=0'
-		return getData(url);
+		var url = 'http://letsmeet.intel.com:8055/REST/Availability/GetRoomAvailabilityByBuildingLocal?organizerMailbox=zamir.ivry@intel.com&buildingName='+ building + '&startTime=' + starttime + '&endTime=' + endtime + '&timeZone=Israel%20Standard%20Time&equipment=&minCapacity=0&apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor=undefined&format=JSON&logLevel=0';
+		//return getData(url);
+		return getJSON(url);
 	}
 
 	function getData(url) {
@@ -94,8 +95,36 @@ function exec(errorCodes,message, log, postMessage, user) {
 		var username = n.username;
 		var password = n.password;
 
-		return JSON.parse(spawn("/usr/intel/bin/curl",["-s", "--ntlm", "-u", username + ":" + password, url]));
+		//return JSON.parse(spawn("/usr/intel/bin/curl",["-s", "--ntlm", "-u", username + ":" + password, url]));
+        getJSON(url);
 	}
+
+    function findAvailableRooms(building) {
+
+        var startDate = new Date();
+        var endDate = new Date();
+        //manual fix for GMT
+        startDate.setHours(startDate.getHours() + 2);
+        endDate.setHours(endDate.getHours() + 2);
+
+        if(startDate.getMinutes() < 30) {
+            startDate.setMinutes(0);
+            endDate.setMinutes(30);
+        } else {
+            startDate.setMinutes(30);
+            endDate.setMinutes(0);
+            endDate.setHours(endDate.getHours() + 1);
+        }
+        var start_time = parseDateString(startDate);//'2015-12-30T17:30:00';
+        var end_time = parseDateString(endDate);//'2015-12-30T18:00:00';
+
+        var organizer = user.mail_address;//'adi.dahan@intel.com';
+        var url = LETS_MEET_API + '/Availability/GetRoomAvailabilityByBuilding?organizerMailbox=' + organizer + '&buildingName=' + building + '&startTime=' + start_time +
+                '&endTime=' + end_time + '&timeZone=Israel Standard Time&equipment=&minCapacity=1&apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor=' + user.id +
+                '&format=JSON&logLevel=0';
+
+        return getJSON(url);
+    }
  
    function bookRoom(room) {
 
@@ -145,4 +174,12 @@ function exec(errorCodes,message, log, postMessage, user) {
 	    }
 	    return response.getBody('utf8');
 	}
+
+    function getJSON(url) {
+        var response = request('GET', url);
+        if (response.statusCode > 299) {
+            console.log('HTTP ERROR ' + response.statusCode + ': %j', response.body)
+        }
+        return JSON.parse(response.getBody('utf8'));
+    }
 };
