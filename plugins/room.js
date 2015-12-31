@@ -29,29 +29,44 @@ function exec(errorCodes,message, log, postMessage, user) {
 		return errorCodes.reject_parsing;
 	}
 
-    //var rooms = findAvailableRooms(building);
     var rooms = getRooms(building);
 
-	var now = (new Date().getTime())+65*60*1000*2;
+    var startDate = new Date();
+    var now = startDate.getTime();
+    var endDate = new Date();
+    //manual fix for GMT
+    startDate.setHours(startDate.getHours() + 2);
+    endDate.setHours(endDate.getHours() + 2);
 
-	//var building = message.length >  1 ? message[1] : 'IDC9'
-	//var rooms = getRooms(building);
+    if(startDate.getMinutes() < 30) {
+        startDate.setMinutes(0);
+        endDate.setMinutes(30);
+    } else {
+        startDate.setMinutes(30);
+        endDate.setMinutes(0);
+        endDate.setHours(endDate.getHours() + 1);
+    }
+
     var matchingRoom = _.chain(rooms).filter(filter);
     var	emptyRoomName = matchingRoom.pluck("ResourceName").value();
 	if(emptyRoomName.length === 0) {
 		postMessage("could not find empty rooms in:" + building);
 	} else {
 		postMessage("found the following rooms:" + emptyRoomName);
-        bookRoom(matchingRoom.value()[0]);
+        bookRoom(matchingRoom.value());
 	}
 
 	return Q.when();
 
+
+    //////////////////////////////
+    // Functions
+
 	function filter(row) {
 		return _.filter(row.FreeBusy,arrayFilter).length === 0;
 		function arrayFilter(timeRange) {
-			e = getTimeInMilli(timeRange.EndTime);
-			s = getTimeInMilli(timeRange.StartTime);
+			var e = getTimeInMilli(timeRange.EndTime);
+			var s = getTimeInMilli(timeRange.StartTime);
 			//		log("s="+ s + "N=" +  now +"E=" + e)
 			return (now > s && now < e);
 		}
@@ -84,82 +99,43 @@ function exec(errorCodes,message, log, postMessage, user) {
 		var starttime = moment().add(-10,'hours').format().split("+")[0];
 		var endtime = moment().add(10,'hours').format().split("+")[0];
 
-		//return JSON.parse(spawn("/usr/intel/bin/curl",["-s","--ntlm","-u",username+":"+password,'letsmeet.intel.com:8055/REST/Availability/GetRoomAvailabilityByBuildingLocal?organizerMailbox=zamir.ivry@intel.com&buildingName='+ building+ '&startTime=' + starttime + '&endTime=' + endtime + '&timeZone=Israel%20Standard%20Time&equipment=&minCapacity=0&apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor=undefined&format=JSON&logLevel=0']));
 		var url = 'http://letsmeet.intel.com:8055/REST/Availability/GetRoomAvailabilityByBuildingLocal?organizerMailbox=zamir.ivry@intel.com&buildingName='+ building + '&startTime=' + starttime + '&endTime=' + endtime + '&timeZone=Israel%20Standard%20Time&equipment=&minCapacity=0&apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor=undefined&format=JSON&logLevel=0';
-		//return getData(url);
 		return getJSON(url);
 	}
 
-	function getData(url) {
-		var n = usersManager.getNegotiator();
-		var username = n.username;
-		var password = n.password;
+   function bookRoom(rooms) {
 
-		//return JSON.parse(spawn("/usr/intel/bin/curl",["-s", "--ntlm", "-u", username + ":" + password, url]));
-        getJSON(url);
-	}
+       var currentRoom = 0;
 
-    function findAvailableRooms(building) {
+		while(currentRoom < rooms.length) {
+            var organizer = user.mail_address;
+            var start_time = parseDateString(startDate);
+            var end_time = parseDateString(endDate);
+            var booked_by = 'Booked by ' + user.mail_name;
+            var time_zone = 'Israel Standard Time';
+            var api_key = '24D661C7-0605-4462-8A25-29B2C34653B9';
+            var requestor = user.id;
 
-        var startDate = new Date();
-        var endDate = new Date();
-        //manual fix for GMT
-        startDate.setHours(startDate.getHours() + 2);
-        endDate.setHours(endDate.getHours() + 2);
+            var body = '%3Cdiv%3E---%20--%20--%20--%20--%20--%20--%20---%20Don%27t%20Edit%20or%20Remove%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%3C/div%3E%3Cdiv%3ERooms:CR-IDC9-9107-12%3C/div%3E%3Cdiv%3E--%20--%20--%20--%20--%20--%20--%20----%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20---%3C/div%3E';
 
-        if(startDate.getMinutes() < 30) {
-            startDate.setMinutes(0);
-            endDate.setMinutes(30);
-        } else {
-            startDate.setMinutes(30);
-            endDate.setMinutes(0);
-            endDate.setHours(endDate.getHours() + 1);
+            var room_mail = rooms[currentRoom].ResourceEmail;
+            var room_name = rooms[currentRoom].ResourceName;
+            var options = 'organizerMailbox=' + organizer + '&resourceEmail=' + room_mail + '&resourceName=' + room_name + '&startTime=' + start_time +
+                    '&endTime=' + end_time + '&subject=' + booked_by + '&body=' + body + '&timeZone=' + time_zone + '&apiKey=' + api_key +
+                    '&requestor=' + requestor + '&format=JSON&logLevel=0';
+
+            var url = 'http://letsmeet.intel.com:8055/REST/Reservation/CreateSingleReservationLocal?' + options;
+
+            console.log('trying to reserve room ' + rooms[currentRoom].ResourceName);
+            if(post(url)) {
+                postMessage('Successfully booked:' + rooms[currentRoom].ResourceName);
+                return;
+            }
+
+            currentRoom++;
         }
-        var start_time = parseDateString(startDate);//'2015-12-30T17:30:00';
-        var end_time = parseDateString(endDate);//'2015-12-30T18:00:00';
 
-        var organizer = user.mail_address;//'adi.dahan@intel.com';
-        var url = LETS_MEET_API + '/Availability/GetRoomAvailabilityByBuilding?organizerMailbox=' + organizer + '&buildingName=' + building + '&startTime=' + start_time +
-                '&endTime=' + end_time + '&timeZone=Israel Standard Time&equipment=&minCapacity=1&apiKey=24D661C7-0605-4462-8A25-29B2C34653B9&requestor=' + user.id +
-                '&format=JSON&logLevel=0';
-
-        return getJSON(url);
-    }
- 
-   function bookRoom(room) {
-
-		var startDate = new Date();
-		var endDate = new Date();
-		//manual fix for GMT
-		startDate.setHours(startDate.getHours() + 2);
-		endDate.setHours(endDate.getHours() + 2);
-
-		if(startDate.getMinutes() < 30) {
-		    startDate.setMinutes(0);
-			endDate.setMinutes(30);
-		} else {
-		    startDate.setMinutes(30);
-			endDate.setMinutes(0);
-			endDate.setHours(endDate.getHours() + 1);
-		}
-		
-		var organizer = user.mail_address;//'adi.dahan@intel.com';
-        var room_mail = room.ResourceEmail;//'IDC99108@intel.com';
-        var room_name = room.ResourceName;//'CR-IDC9-9108-12';
-        var start_time = parseDateString(startDate);//'2015-12-30T17:30:00';
-        var end_time = parseDateString(endDate);//'2015-12-30T18:00:00';
-        var booked_by = 'Booked by ' + user.mail_name;//Dahan, Adi';
-        var time_zone = 'Israel Standard Time';
-        var api_key = '24D661C7-0605-4462-8A25-29B2C34653B9';
-        var requestor = user.id;//'adahan2';
-
-        var body = '%3Cdiv%3E---%20--%20--%20--%20--%20--%20--%20---%20Don%27t%20Edit%20or%20Remove%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%3C/div%3E%3Cdiv%3ERooms:CR-IDC9-9107-12%3C/div%3E%3Cdiv%3E--%20--%20--%20--%20--%20--%20--%20----%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20--%20---%3C/div%3E';
-        var options = 'organizerMailbox=' + organizer + '&resourceEmail=' + room_mail + '&resourceName=' + room_name + '&startTime=' + start_time +
-                '&endTime=' + end_time + '&subject=' + booked_by + '&body=' + body + '&timeZone=' + time_zone + '&apiKey=' + api_key +
-                '&requestor=' + requestor + '&format=JSON&logLevel=0';
-
-        var url = 'http://letsmeet.intel.com:8055/REST/Reservation/CreateSingleReservationLocal?' + options;
-		post(url);
+       postMessage('Unable to book room');
     }
 
 	function parseDateString(date) {
@@ -168,18 +144,27 @@ function exec(errorCodes,message, log, postMessage, user) {
 	}
 
 	function post(url) {
-	    var response = request('POST', url);
-	    if (response.statusCode > 299) {
-	        console.log('HTTP ERROR ' + response.statusCode + ': %j', response.body)
-	    }
-	    return response.getBody('utf8');
+        try {
+            var response = request('POST', url);
+            var body = JSON.parse(response.getBody('utf8'));
+            if (response.statusCode > 299) {
+                console.log('HTTP ERROR ' + response.statusCode + ': %j', body)
+                return undefined;
+            }
+            return response.getBody('utf8');
+        }
+	    catch(err) {
+            console.log('HTTP post error: ' + err);
+            return undefined;
+        }
 	}
 
     function getJSON(url) {
         var response = request('GET', url);
+        var body = JSON.parse(response.getBody('utf8'));
         if (response.statusCode > 299) {
-            console.log('HTTP ERROR ' + response.statusCode + ': %j', response.body)
+            console.log('HTTP ERROR ' + response.statusCode + ': %j', body)
         }
-        return JSON.parse(response.getBody('utf8'));
+        return body;
     }
 };

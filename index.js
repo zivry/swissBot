@@ -11,10 +11,10 @@ var CHANNEL_USER = '#bot_channel';
 
 var slack = new Slack(apiToken);
 
+//getUsers(); // - user this to get new users manually
+
 usersManager.init();
 
-//setInterval(readMessages, 1000 * 10);
-//setInterval(readPrivateMessages, 1000 * 10);
 setInterval(function() {
     readMessages();
     readPrivateMessages();
@@ -52,3 +52,10 @@ function processIMs(err, response) {
         });
     }
 };
+
+//function getUsers() {
+//    slack.api('users.list', {}, function(err, reponse) {
+//        console.log(err);
+//        console.log(response);
+//    });
+//};
