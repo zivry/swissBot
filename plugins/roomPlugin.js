@@ -1,11 +1,9 @@
-var Q = require('q');
-var _ = require('underscore');
-var moment = require('moment');
-
 var common = require('../lib/common');
 var constants = require('../lib/constants');
 
-var DEFAULT_BUILDING = 'IDC9';
+var Q = require('q');
+var _ = require('underscore');
+var moment = require('moment');
 
 module.exports = {
 	exec: exec,
@@ -13,7 +11,7 @@ module.exports = {
 };
 
 function help() {
-	return "room [buliding] - Find a room in requested building or in default building:" + DEFAULT_BUILDING;
+	return "room [buliding] - Find a room in requested building or in default building:" + constants.DEFAULT_BUILDING;
 }
 
 function exec(errorCodes,message, log, postMessage, user) {
@@ -57,7 +55,6 @@ function exec(errorCodes,message, log, postMessage, user) {
 
 	return Q.when();
 
-
     //////////////////////////////
     // Functions
 
@@ -76,7 +73,7 @@ function exec(errorCodes,message, log, postMessage, user) {
 
 	function validateBuildingExists(building) {
 		if(building === undefined) {
-			return DEFAULT_BUILDING;
+			return constants.DEFAULT_BUILDING;
 		}
 
 		building = 	building.toUpperCase();

@@ -63,20 +63,30 @@ function exec(errorCodes, message, log, postMessage, user) {
     function printNextMeeting(user, postMessage) {
 
         postMessage(common.greeting() + user.name + '!, please give me a few seconds to find your next meeting.');
-        var startDate =  moment().format('DD-MMMM-YYYY');
+        var startDate =  moment();
         var endDate =  moment().add(3, 'days').format('DD-MMMM-YYYY');
-        var meetings = getMeetings(startDate, endDate);
+        var meetings = getMeetings(startDate.format('DD-MMMM-YYYY'), endDate);
         var currMeeting = 0;
         while(currMeeting < meetings.length) {
             var meeting = meetings[currMeeting];
             var startTime = parseLetsMeetTime(meeting.StartDateTime);
-            if(startTime.getHours() > 0 && startTime.getMinutes() > 0) {
+            if(shouldPrintMeeting()) {
                 return postMessage(printMeeting(meeting));
             }
             currMeeting++;
         }
 
         return postMessage('Your calendar is free for the next 3 days');
+
+        function shouldPrintMeeting() {
+            if(startTime.getHours() === 0 && startTime.getMinutes() === 0) {
+                return false;
+            }
+            if(!startDate.isBefore(startTime)) {
+                return false;
+            }
+            return true;
+        }
 
         function printMeeting(meeting) {
             var printableMeeting = printDate(meeting.StartDateTime, meeting.EndDateTime);
