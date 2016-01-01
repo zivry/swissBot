@@ -1,6 +1,9 @@
-var exchanger = require('exchanger');
 var _ = require('underscore');
 var usersManager = require('../lib/usersManager');
+var moment = require('moment');
+
+var common = require('../lib/common');
+var constants = require('../lib/constants');
 
 module.exports = {
   exec: exec,
@@ -13,11 +16,11 @@ function help() {
 
 function exec(errorCodes, message, log, postMessage, user) {
     if (message[0] === 'meeting') {
-        if(!user  || !user.calendarId) {
+        if(!user) {
             return postMessage('You are not authorized to perform this operation');
         }
 
-        return printNextMeeting(user, postMessage, log);
+        return printNextMeeting(user, postMessage);
 
         log(message);
     }
@@ -27,145 +30,90 @@ function exec(errorCodes, message, log, postMessage, user) {
         }
 
         if(message.length > 1 && message[1] === 'tomorrow') {
-            return printAgenda('tomorrow', user, postMessage, log);
+            return printAgenda('tomorrow', user, postMessage);
         } else {
-            return printAgenda('today', user, postMessage, log);
+            return printAgenda('today', user, postMessage);
         }
     }
     return errorCodes.reject_notHandling;
-};
 
-function printAgenda(day, user, postMessage, log) {
-    var start = new Date();
-    start.setHours(6);
-    start.setMinutes(0);
+    function printAgenda(day, user, postMessage) {
+        postMessage(common.greeting() + user.name + '!, please give me a minute to prepare your agenda for ' + day + '.');
+        var startDate =  moment();
+        var endDate =  moment().add(1, 'days');
 
-    if(day === 'tomorrow') {
-        start = _addDays(start, 1);
-    }
-    var end = _addDays(start, 1);
 
-    _getMeetings(start, end, user, handleMeeting);
-
-    return postMessage(_greeting() + user.name + '!, please give me a minute to prepare your agenda for ' + day + '.');
-
-    function handleMeeting(err, meetings) {
-        if(err) {
-            if(err.message === 'No events') {
-                postMessage('Looks like your calendar is free for today.\nHave fun! :)');
-            } else {
-                log('error: ' + err);
-            }
-            return;
+        if(day === 'tomorrow') {
+            startDate.add(1, 'days');
+            endDate.add(1, 'days');
         }
-
-        var message = start.toDateString() + '\n';
+        var meetings = getMeetings(startDate.format('DD-MMMM-YYYY'),endDate.format('DD-MMMM-YYYY'));
+        var message = startDate.format('ddd MMM DD YYYY') + '\n';
         _.forEach(meetings, function(meeting) {
             var location = '\n';
-            if(typeof meeting.location === 'string') {
-                location = ' (' + meeting.location  + ')\n';
+            if(meeting.Location) {
+                location = ' (' + meeting.Location  + ')\n';
             }
-            message += _printHours(new Date(meeting.start), new Date(meeting.end));
-            message += ' : ' + meeting.subject + location;
+            message += printHours(parseLetsMeetTime(meeting.StartDateTime), parseLetsMeetTime(meeting.EndDateTime));
+            message += ' : ' + meeting.Subject + location;
         });
-        postMessage(message);
+        return postMessage(message);
     }
-}
 
-function printNextMeeting(user, postMessage, log) {
-    var now = new Date();
-    var next = _addDays(now,  3);
-    _getMeetings(now, next, user, handleMeeting);
+    function printNextMeeting(user, postMessage) {
 
-    return postMessage(_greeting() + user.name + '!, please give me a few seconds to find your next meeting.');
-
-    function handleMeeting(err, meetings) {
-        if(err) {
-            if(err.message === 'No events') {
-                postMessage('You have no upcoming meetings in the next 3 days.\nHave fun! :)');
-            } else {
-                log('error: ' + err);
+        postMessage(common.greeting() + user.name + '!, please give me a few seconds to find your next meeting.');
+        var startDate =  moment().format('DD-MMMM-YYYY');
+        var endDate =  moment().add(3, 'days').format('DD-MMMM-YYYY');
+        var meetings = getMeetings(startDate, endDate);
+        var currMeeting = 0;
+        while(currMeeting < meetings.length) {
+            var meeting = meetings[currMeeting];
+            var startTime = parseLetsMeetTime(meeting.StartDateTime);
+            if(startTime.getHours() > 0 && startTime.getMinutes() > 0) {
+                return postMessage(printMeeting(meeting));
             }
-            return;
+            currMeeting++;
         }
-        if(meetings && meetings.length > 0) {
-            var allDay = '';
-            var nextMeeting = '';
-            for(var i=0; i < meetings.length; i++) {
-                if(meetings[i].allday) {
-                    allDay += meetings[i].subject + '\n';
-                }else {
-                    nextMeeting = _printMeeting(meetings[0]);
-                    break;
-                }
+
+        return postMessage('Your calendar is free for the next 3 days');
+
+        function printMeeting(meeting) {
+            var printableMeeting = printDate(meeting.StartDateTime, meeting.EndDateTime);
+            printableMeeting += '\n' + meeting.Subject;
+            if(meeting.Location) {
+                printableMeeting += '\nAt: ' + meeting.Location;
             }
-            if(nextMeeting !== '') {
-                postMessage('Your next meeting is:\n' + nextMeeting);
-            }
-            if(allDay !== '') {
-                postMessage('\nYou also have all days event(s) :\n' + allDay);
-            }
+            printableMeeting += '\nBy: ' + meeting.Organizer.Name;
+            return printableMeeting;
+        }
+
+        function printDate(startDateTime, endDateTime) {
+            var startDate = parseLetsMeetTime(startDateTime);
+            var endDate = parseLetsMeetTime(endDateTime);
+
+            var displayDate = '*' + startDate.toDateString() + '*\n';
+            displayDate += printHours(startDate, endDate);
+
+            return displayDate;
         }
     }
-}
 
-function _getMeetings(now, next, user, callback) {
-    var negogiator = usersManager.getNegotiator();
-    var options = {
-        url: 'webmail.intel.com',
-        username: negogiator.username,
-        password: negogiator.password
-    };
+    function getMeetings(startDate, endDate) {
+        var email = user.mail_address;
+        var requestor = user.id;
 
-    exchanger.initialize(options, function() {
-        exchanger.getCalendarItems({id : user.calendarId}, now.toISOString(), next.toISOString(), callback);
-    });
-}
+        var url = constants.LETS_MEET_API + '/Reservation/GetMyMeetings?email=' + email + '&fromDate=' + startDate + '&toDate=' + endDate +
+                '&emailType=currentUser&getPrivate=true&apiKey=' + constants.LETS_MEET_API_KEY + '&requestor=' + requestor + '&format=JSON&logLevel=0'
 
-function _printMeeting(meeting) {
-    var printableMeeting = _printDate(meeting.start, meeting.end);
-    printableMeeting += '\n' + meeting.subject;
-    if(typeof meeting.location === 'string') {
-        printableMeeting += '\nAt: ' + meeting.location;
+        return common.getHttpJSON(url);
     }
-    printableMeeting += '\nBy: ' + meeting.organizer;
-    return printableMeeting;
-}
 
-function _printDate(startDateTime, endDateTime) {
-    var startDate = new Date(startDateTime);
-    var endDate = new Date(endDateTime);
-
-    var displayDate = '*' + startDate.toDateString() + '*\n';
-    displayDate += _printHours(startDate, endDate);
-
-    return displayDate;
-}
-
-function _printHours(startDate, endDate) {
-    var hours = '*' + startDate.getHours()  + ':' + _minutes(startDate);
-    hours += ' - ' + endDate.getHours()  + ':' + _minutes(endDate) + '*';
-
-    return hours;
-
-    function _minutes(dateTime) {
-        return (dateTime.getMinutes() === 0) ? '00' : dateTime.getMinutes();
+    function parseLetsMeetTime(date) {
+        return new Date(JSON.parse(date.split("(")[1].split(")")[0]))
     }
-}
 
-function _addDays(date, days) {
-    var resultDate = new Date(date);
-    var day = 1000 * 60 * 60 * 24;
-    return new Date(resultDate.getTime() + day * days);
-}
-
-function _greeting() {
-    var now = new Date();
-    if(now.getHours() < 12) {
-        return 'Good Morning ';
+    function printHours(startDate, endDate) {
+        return '*' + moment(startDate).format('HH:mm') + ' - ' + moment(endDate).format('HH:mm') + '*';
     }
-    if(now.getHours() < 16) {
-        return 'Good Afternoon ';
-    }
-    return "Good Night ";
-}
+};

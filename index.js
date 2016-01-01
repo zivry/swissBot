@@ -1,13 +1,12 @@
-var Slack = require('slack-node');
 var processHandler = require('./lib/process');
 var usersManager = require('./lib/usersManager');
+var constants = require('./lib/constants');
+var Slack = require('slack-node');
 var _ = require('underscore');
 
 var apiToken = process.env.api_key;
 console.info('Slack API Key: ' + apiToken);
-var bot_channel_id = 'C0GPN3KV2';
 
-var CHANNEL_USER = '#bot_channel';
 
 var slack = new Slack(apiToken);
 
@@ -22,15 +21,15 @@ setInterval(function() {
 
 function readMessages() {
     slack.api('channels.history', {
-        channel : bot_channel_id,
-        oldest : usersManager.getTimeStamp(CHANNEL_USER),
+        channel : constants.BOT_CHANNEL_ID,
+        oldest : usersManager.getTimeStamp(constants.BOT_CHANNEL_NAME),
         count: 1000
     }, processHandler.processChatMessages);
 }
 
 function readPrivateMessages() {
     slack.api('im.list', {}, processIMs);
-};
+}
 
 function processIMs(err, response) {
     if (err) {
