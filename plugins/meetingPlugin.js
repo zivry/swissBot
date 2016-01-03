@@ -71,7 +71,7 @@ function exec(errorCodes, message, log, postMessage, user) {
         while(currMeeting < meetings.length) {
             var meeting = meetings[currMeeting];
             var startTime = parseLetsMeetTime(meeting.StartDateTime);
-            if(shouldPrintMeeting()) {
+            if(shouldPrintMeeting(startTime, startDate)) {
                 return postMessage(printMeeting(meeting));
             }
             currMeeting++;
