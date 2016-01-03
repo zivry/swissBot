@@ -1,21 +1,15 @@
 var processHandler = require('./lib/process');
 var usersManager = require('./lib/usersManager');
-var persistencyManager = require('./lib/persistencyManager');
 var constants = require('./lib/constants');
-var Slack = require('slack-node');
+var common = require('./lib/common');
 var _ = require('underscore');
 
-var apiToken = process.env.api_key;
-console.info('Slack API Key: ' + apiToken);
-
-var slack = new Slack(apiToken);
+var slack = common.getSlackAPI();
 
 /////////////////////////////
 // Main Sequence
 
 //getUsers(); // - user this to get new users manually
-
-init();
 
 setInterval(function() {
     readMessages();
@@ -25,11 +19,6 @@ setInterval(function() {
 
 /////////////////////////////
 // Functions
-
-function init() {
-    persistencyManager.init();
-    usersManager.init();
-}
 
 function readMessages() {
     slack.api('channels.history', {
