@@ -50,14 +50,6 @@ function exec(errorCodes, message, log, postMessage, user) {
         var meetings = getMeetings(user, startDate.format('DD-MMMM-YYYY'),endDate.format('DD-MMMM-YYYY'));
         var message = startDate.format('ddd MMM DD YYYY') + '\n';
         message += printAgenda(meetings);
-        //_.forEach(meetings, function(meeting) {
-        //    var location = '\n';
-        //    if(meeting.Location) {
-        //        location = ' (' + meeting.Location  + ')\n';
-        //    }
-        //    message += printHours(parseLetsMeetTime(meeting.StartDateTime), parseLetsMeetTime(meeting.EndDateTime));
-        //    message += ' : ' + meeting.Subject + location;
-        //});
         return postMessage(message);
     }
 
@@ -76,14 +68,20 @@ function exec(errorCodes, message, log, postMessage, user) {
             }
             currMeeting++;
         }
-
         return postMessage('Your calendar is free for the next 3 days');
+
+        function shouldPrintMeeting(startTime, startDate) {
+            if(startTime.getHours() === 0 && startTime.getMinutes() === 0) {
+                return false;
+            }
+            return startDate.isBefore(startTime);
+        }
     }
 };
 
 function getNextMeetingReminder(user) {
     var startDate =  moment();
-    var endDate =  moment().add(30, 'minutes').format('DD-MMMM-YYYY');
+    var endDate =  moment().add(1, 'days').format('DD-MMMM-YYYY');
     var nextMeetings = getMeetings(user, startDate.format('DD-MMMM-YYYY'), endDate);
     var message = '';
     _.forEach(nextMeetings,  function(meeting) {
@@ -93,6 +91,11 @@ function getNextMeetingReminder(user) {
         }
     });
     return message;
+
+    function shouldPrintMeeting(startTime, startDate) {
+        var meetingWindow = moment().add(15, 'minutes');
+        return startDate.isBefore(startTime) && !meetingWindow.isBefore(startTime);
+    }
 }
 
 function getAgenda(user) {
@@ -151,11 +154,4 @@ function printHours(startDate, endDate) {
 
 function parseLetsMeetTime(date) {
     return new Date(JSON.parse(date.split("(")[1].split(")")[0]))
-}
-
-function shouldPrintMeeting(startTime, startDate) {
-    if(startTime.getHours() === 0 && startTime.getMinutes() === 0) {
-        return false;
-    }
-    return startDate.isBefore(startTime);
 }
