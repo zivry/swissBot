@@ -3,7 +3,7 @@ var constants = require('../lib/constants');
 var usersManager = require('../lib/usersManager');
 var persistencyManager = require('../lib/persistencyManager');
 var meetingPlugin = require('./meetingPlugin');
-
+var logger = require('../lib/logger');
 var _ = require('underscore');
 var scheduler = require('node-schedule');
 
@@ -27,7 +27,7 @@ module.exports = {
 };
 
 function init() {
-    console.log('remindersPlugin init()');
+    logger.log('info','remindersPlugin init()');
     readObject();
 }
 
@@ -104,7 +104,7 @@ function exec(errorCodes, message, log, postMessage, user) {
 }
 
 function meetingReminderTask() {
-    console.log('remindersPlugin: meetingReminderTask wake up');
+    logger.log('info','remindersPlugin: meetingReminderTask wake up');
     _.forEach(registrations.meetings.registerUsers, function(user) {
         var userObject = usersManager.getUserByIDSID(user);
         var nextMeeting = meetingPlugin.getNextMeetingReminder(userObject);
@@ -115,7 +115,7 @@ function meetingReminderTask() {
 }
 
 function agendaReminderTask() {
-    console.log('remindersPlugin: agendaReminderTask wake up');
+    logger.log('info','remindersPlugin: agendaReminderTask wake up');
     _.forEach(registrations.agenda.registerUsers, function(user) {
         var userObject = usersManager.getUserByIDSID(user);
         var agenda = meetingPlugin.getAgenda(userObject);

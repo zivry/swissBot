@@ -1,6 +1,7 @@
 var Q = require('q');
 var _ = require('underscore');
 var extend = require('util')._extend;
+var logger = require('../lib/logger');
 var jenkins = require('jenkins-api').init('http://rezra3:769c247460c5c507d4d062883421222b@nb-jenkins.intel.com:8080');
 // TODO - move jenkins api token and username to env
 
@@ -61,7 +62,7 @@ function exec(errorCodes,words, log, postMessage) {
     }
 
     function processError(err) {
-        console.error('Failed to build', err);
+        logger.log('error','Failed to build', err);
         return Q.reject();
     }
 };
