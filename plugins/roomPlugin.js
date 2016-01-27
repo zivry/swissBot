@@ -126,7 +126,7 @@ function exec(errorCodes,message, log, postMessage, user) {
 
             var url = constants.LETS_MEET_API + '/Reservation/CreateSingleReservationLocal?' + options;
 
-            console.log('trying to reserve room ' + rooms[currentRoom].ResourceName);
+            log('trying to reserve room ' + rooms[currentRoom].ResourceName);
             if(common.postHttpJSON(url)) {
                 postMessage('Successfully booked:' + rooms[currentRoom].ResourceName);
                 return;
