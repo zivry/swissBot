@@ -1,5 +1,5 @@
 var processhandler = require('./lib/process');
-var usersmanager = require('./lib/usersmanager');
+var usersmanager = require('./lib/usersManager');
 var constants = require('./lib/constants');
 var common = require('./lib/common');
 var _ = require('underscore');
