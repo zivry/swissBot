@@ -1,59 +1,59 @@
-var processhandler = require('./lib/process');
-var usersmanager = require('./lib/usersManager');
+var processHandler = require('./lib/process');
+var usersManager = require('./lib/usersManager');
 var constants = require('./lib/constants');
 var common = require('./lib/common');
 var _ = require('underscore');
 
-var slack = common.getslackapi();
+var slack = common.getSlackAPI();
 
 /////////////////////////////
-// main sequence
+// Main Sequence
 
-//getusers(); // - user this to get new users manually
+//getUsers(); // - user this to get new users manually
 
-setinterval(function() {
-    readmessages();
-    readprivatemessages();
+setInterval(function() {
+    readMessages();
+    readPrivateMessages();
 }, 1000 * 10);
 
 
 /////////////////////////////
-// functions
+// Functions
 
-function readmessages() {
+function readMessages() {
     slack.api('channels.history', {
-        channel : constants.bot_channel_id,
-        oldest : usersmanager.gettimestamp(constants.bot_channel_name),
+        channel : constants.BOT_CHANNEL_ID,
+        oldest : usersManager.getTimeStamp(constants.BOT_CHANNEL_NAME),
         count: 1000
-    }, processhandler.processchatmessages);
+    }, processHandler.processChatMessages);
 }
 
-function readprivatemessages() {
-    slack.api('im.list', {}, processims);
+function readPrivateMessages() {
+    slack.api('im.list', {}, processIMs);
 }
 
-function processims(err, response) {
+function processIMs(err, response) {
     if (err) {
-        console.error('failed to read private messages from slack', err);
+        console.error('Failed to read private messages from Slack', err);
         return;
     }
     if(response.ims.length) {
-        _.foreach(response.ims,  function(im) {
-            if(!usersmanager.getuser(im.user)) {
+        _.forEach(response.ims,  function(im) {
+            if(!usersManager.getUser(im.user)) {
                 return;
             }
-            usersmanager.setuserchannel(im.user, im.id);
+            usersManager.setUserChannel(im.user, im.id);
 
             slack.api('im.history', {
                 channel : im.id,
-                oldest : usersmanager.gettimestamp(im.id),
+                oldest : usersManager.getTimeStamp(im.id),
                 count: 1000
-            }, processhandler.processprivatemessages);
+            }, processHandler.processPrivateMessages);
         });
     }
 };
 
-function getusers() {
+function getUsers() {
     slack.api('users.list', {}, function(err, reponse) {
         console.log(err);
         console.log(response);
