@@ -136,10 +136,12 @@ function writeObject() {
 function readObject() {
     var persistencyObject = persistencyManager.readFromPersistency(constants.PERSISTENCY_OBJECTS.REMINDERS);
     if(persistencyObject.meeting) {
+        logger.log('info','remindersPlugin: readObject() - re-registering for meeting: ' + persistencyObject.meeting);
         registrations.meetings.registerUsers = persistencyObject.meeting;
         registrations.meetings.scheduleJob = scheduler.scheduleJob(registrations.meetings.schedule, meetingReminderTask);
     }
     if(persistencyObject.agenda) {
+        logger.log('info','remindersPlugin: readObject() - re-registering for agenda: ' + persistencyObject.agenda);
         registrations.agenda.registerUsers = persistencyObject.agenda;
         registrations.agenda.scheduleJob = scheduler.scheduleJob(registrations.agenda.schedule, agendaReminderTask);
     }
