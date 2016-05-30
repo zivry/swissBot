@@ -31,8 +31,8 @@ function exec(errorCodes,message, log, postMessage, user) {
 
     var endDate = new Date();
     //manual fix for GMT
-    startDate.setHours(startDate.getHours() + 2);
-    endDate.setHours(endDate.getHours() + 2);
+    startDate.setHours(startDate.getHours() + 3);
+    endDate.setHours(endDate.getHours() + 3);
 
     var now = startDate.getTime();
     if(startDate.getMinutes() < 30) {
