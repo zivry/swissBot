@@ -10,7 +10,7 @@ To add a plugin write a js script that export these two functions:
 a very simple example is the echo plugin. just copy it and go from there.
 
 # help
-[de]register [meeting/agenda]
+[de]register \[meeting/agenda\]
 (remindersPlugin)
 
 meeting
