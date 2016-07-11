@@ -9,4 +9,24 @@ To add a plugin write a js script that export these two functions:
 
 a very simple example is the echo plugin. just copy it and go from there.
 
+# help
+[de]register [meeting/agenda]
+(remindersPlugin)
 
+meeting
+agenda
+agenda tomorrow
+(meetingPlugin)
+
+echo <message>
+(echoPlugin)
+
+room [buliding] - Find a room in requested building or in default building:IDC11
+(roomPlugin)
+
+
+feeder <task name pattern> - Return most recent task that answers pattern
+(feeder)
+
+build <task name>
+(jenkinsBuildPlugin)
