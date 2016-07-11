@@ -12,7 +12,7 @@ a very simple example is the echo plugin. just copy it and go from there.
 # Starting the bot
 * clone the repository to unix directory 
 * run this:
-  * setenv api_key \[slack api key\] #create bot configuration in your slack
+  * setenv api_key \[slack api key\] #[create bot configuration in your slack](https://my.slack.com/services/new/bot)
   * setenv POST_MESSAGE # if you want to actually post to slack
   * node /nfs/iil/gen/itec/sws2/tools/nodesjs/node-v0.12.7-linux-x64/bin/node
 
